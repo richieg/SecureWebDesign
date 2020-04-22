@@ -1,0 +1,249 @@
+﻿@page "/fetchorders"
+
+@using DrinkLink.Data
+@using DrinkLink.Data.DrinkLink;
+@inject NavigationManager NavigationManager
+
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+@inherits OwningComponentBase<DrinkLinkProductDataService>
+@attribute [Authorize(Roles = "AdminO,Operations")]
+
+<h1>Orders</h1>
+@if (drinkLinkOrderCurrents == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <td>Order Reference</td>
+                <td>Customer Name</td>
+                <td>Customer Address</td>
+                <td>Date of Order</td>
+
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var dlCurrentOrder in drinkLinkOrderCurrents)
+            {
+                <tr>
+                    <td>
+                        @dlCurrentOrder.DlOrderId
+
+                    </td>
+
+                    <td>
+                        @dlCurrentOrder.DlOrderCustomerNames
+
+                    </td>
+                    <td>
+                        @dlCurrentOrder.DlOrderCustomerAddress
+                    </td>
+                    <td>
+                        @dlCurrentOrder.DlOrderDate
+
+                    </td>
+
+                    <td>
+
+                        <button data-toggle="tooltip" title="Show Order Items " class="btn btn-outline-dark"
+                                @onclick="(() =>  ShowOrderItems(dlCurrentOrder.DlOrderId))">
+                            <span class="iconify" data-icon="ls:view" data-inline="false"></span>
+                        </button>
+                    </td>
+
+
+                </tr>
+            }
+        </tbody>
+    </table>
+
+
+    @if (ShowPopup == 1)
+    {
+        <!-- This is the popup to create or edit a statement type -->
+        <div class="modal" tabindex="-1" style="display:block" role="dialog">
+            <div class="modal-dialog modal-dialog-scrollable modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">@modalHeader</h3>
+                        <!-- Button to close the popup -->
+                        <button type="button" class="close"
+                                @onclick="ClosePopup">
+                            <span aria-hidden="true">X</span>
+                        </button>
+                    </div>
+                    <!-- Edit form for the current statement -->
+                    <div class="modal-body">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <td>Product Id</td>
+                                    <td>Product</td>
+                                    <td>Pack Quantity</td>
+                                    <td>Order Quantity</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var currentOrderProduct in drinkLinkOrderCurrentProducts)
+                                {
+                                    <tr>
+                                        @currentOrderProduct.DlOrderCurrentOrderId
+                                        
+                                        <td>@currentOrderProduct.DlOrderCurrentProduct</td>
+
+                                        <td>@currentOrderProduct.DlOrderCurrentProductQuantity</td>
+
+                                        <td>@currentOrderProduct.DlOrderCurrentQuantity</td>
+
+                                        <td>
+                                        </td>
+
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td>
+                                            <label>
+                                                Order Status
+                                                <select @bind="currentOrderProduct.DlOrderStatusStatus">
+
+                                                    @foreach (var selectOption in availableStati)
+                                                    {
+                                                        <option value=@selectOption>@selectOption</option>
+                                                    }
+
+                                                </select>
+                                            </label>
+                                        </td>
+
+
+
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td>
+                                            <button data-toggle="tooltip" title="Order" class="btn btn-outline-dark"
+                                                    @onclick="(() => ChangeOrderStatus(currentOrderProduct.DlOrderCurrentOrderId, currentOrderProduct.DlOrderStatusStatus))">
+
+                                                Update Order
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                }
+
+
+                            </tbody>
+
+                        </table>
+                        <p>
+                        
+                        </p>
+             
+
+
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    }
+<p></p>
+}
+
+
+@code {
+
+    [CascadingParameter]
+    private Task<AuthenticationState>
+    authenticationStateTask
+    { get; set; }
+
+    string modalHeader = "";
+    int ShowPopup = 0;
+
+    //string orderStatus;
+
+
+
+    List<string> availableStati = new List<string>();
+
+
+    DrinkLinkOrderCurrentCustomer dlCurrentOrder = new DrinkLinkOrderCurrentCustomer();
+    List<DrinkLinkOrderCurrentCustomer> drinkLinkOrderCurrents = new List<DrinkLinkOrderCurrentCustomer>();
+
+
+    List<DrinkLinkOrderCurrentProduct> drinkLinkOrderCurrentProducts = new List<DrinkLinkOrderCurrentProduct>();
+
+    void ClosePopup()
+    {
+        // Close the Popup
+
+        ShowPopup = 0;
+
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        int orderStatus = 5;
+        var user = (await authenticationStateTask).User;
+        if (user.IsInRole("AdminO"))
+        {
+            orderStatus = 0;
+            availableStati = Constants.DropDownOptions.availableStatusAdmin;
+        }
+        else if (user.IsInRole("Operations"))
+        {
+            orderStatus = 1;
+            availableStati = Constants.DropDownOptions.availableStatusOps;
+        }
+
+
+        drinkLinkOrderCurrents = await @Service.GetDlCurrentOrders(orderStatus);
+
+
+
+    }
+
+
+    async Task ShowOrderItems(string OrderId)
+    {
+        modalHeader = Constants.ModalContent.modalHeaderOrderDetails;
+        drinkLinkOrderCurrentProducts = await @Service.GetDlCurrentOrderDetails(OrderId);
+        ShowPopup = 1;
+
+    }
+
+    void ChangeOrderStatus(string orderId, string orderStatus)
+    {
+
+        int shrtStati;
+        Dictionary<string, int> availableStatiShrt = Constants.DropDownOptions.availableStatusShrt;
+        availableStatiShrt.TryGetValue(orderStatus, out shrtStati);
+
+        var result = @Service.UpdateOrderStatus(orderId,shrtStati);
+        if(result)
+        {
+            ClosePopup();
+
+            NavigationManager.NavigateTo("/fetchorders");
+
+
+        }
+
+    }
+
+
+
+
+}

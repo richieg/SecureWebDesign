@@ -1,0 +1,42 @@
+﻿{
+   "ContextClassName": "DrinkLinkContext",
+   "ContextNamespace": null,
+   "DefaultDacpacSchema": null,
+   "DoNotCombineNamespace": false,
+   "IdReplace": false,
+   "IncludeConnectionString": false,
+   "ModelNamespace": null,
+   "OutputContextPath": null,
+   "OutputPath": "Data\\DrinkLink",
+   "ProjectRootNamespace": "DrinkLink",
+   "SelectedHandlebarsLanguage": 0,
+   "SelectedToBeGenerated": 0,
+   "Tables": [
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[DrinkLinkContacts]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[DrinkLinkOrder]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[DrinkLinkProductCategory]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[DrinkLinkProductQuantity]"
+      },
+      {
+         "HasPrimaryKey": true,
+         "Name": "[dbo].[DrinkLinkProducts]"
+      }
+   ],
+   "UseDatabaseNames": true,
+   "UseFluentApiOnly": true,
+   "UseHandleBars": false,
+   "UseInflector": false,
+   "UseLegacyPluralizer": false,
+   "UseSpatial": false
+}

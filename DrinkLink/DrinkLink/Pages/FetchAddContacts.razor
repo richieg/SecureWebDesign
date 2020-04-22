@@ -1,0 +1,101 @@
+﻿@page "/fetchaddcontacts"
+
+@using DrinkLink.Data
+@using DrinkLink.Data.DrinkLink;
+@inject DrinkLinkUserDataService DlUserService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@attribute [Authorize(Roles = "AdminU")]
+
+<h1>Drinklink Users</h1>
+
+<p></p>
+
+@if (dlContacts == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Customer Name</th>
+                <th>Address</th>
+                <th>Phone Number</th>
+                <th>Email</th>
+                <th>Role</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var dlContact in dlContacts)
+            {
+                
+                <tr>
+                    <td>@dlContact.DlContactName  </td>
+                    <td>@dlContact.DlContactAddressLine1  </td>
+                    <td>@dlContact.DlContactPhoneNumber </td>
+                    <td>@dlContact.DlContactEmail </td>
+                    <td>
+
+                        <select @bind="dlContact.DlContactId">
+
+                            @foreach (var selectOption in availbaleRoles)
+                            {
+                                <option value=@selectOption>@selectOption</option>
+                            }
+
+                        </select>
+
+
+                    </td>
+                    <td>
+                        <button data-toggle="tooltip" title="Save User" class="btn btn-outline-dark btn-lg"
+                                @onclick="(() => UpdateStatus(dlContact.DlContactOwnership ,dlContact.DlContactId))">
+                            <span class="iconify" data-icon="fa-solid:save" data-inline="false"></span>
+                        </button>
+                    </td>
+
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+
+
+    List<DrinkLinkContacts> dlContacts =
+                 new List<DrinkLinkContacts>();
+
+    List<string> availbaleRoles = Constants.DropDownOptions.availableRoles;
+
+    [CascadingParameter]
+    private Task<AuthenticationState>
+    authenticationStateTask
+    { get; set; }
+
+
+    string selectedRole;
+
+
+    [Authorize(Roles = "AdminU")]
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await authenticationStateTask).User;
+        string userName = user.Identity.Name;
+        dlContacts = await DlUserService.GetDlUserData(userName);
+    }
+
+    [Authorize(Roles = "AdminU")]
+    void UpdateStatus(string userId, string userRole)
+    {
+        var result = DlUserService.UpdateNewDlContact(userId, userRole);
+        if (result)
+        {
+            NavigationManager.NavigateTo("/fetchaddcontacts", true);
+        }
+
+    }
+}

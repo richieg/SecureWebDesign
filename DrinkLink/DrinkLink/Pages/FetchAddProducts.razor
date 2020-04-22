@@ -1,0 +1,472 @@
+﻿@page "/fetchaddproducts"
+
+@using DrinkLink.Data
+@using DrinkLink.Data.DrinkLink;
+@inject NavigationManager NavigationManager
+@attribute [Authorize(Roles = "AdminO,Customer")]
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+@inherits OwningComponentBase<DrinkLinkProductDataService>
+
+<h1>Drinklink Products</h1>
+<AuthorizeView Roles="Customer">
+    <div>
+        <button style="float: right;" data-toggle="tooltip" title="View Basket" class="btn btn-outline-dark"
+                @onclick="(() =>ViewFullOrder())">
+            <span class="iconify" data-icon="entypo:shopping-cart" data-inline="false"></span>@currentOrderForDisplay.Count()
+        </button>
+    </div>
+    </AuthorizeView>
+
+    <p></p>
+
+    @if (dlProducts == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var dlProduct in dlProducts)
+                {
+                    <tr>
+
+                        <td>
+                            @dlProduct.DlProductName <br />
+                            @dlProduct.DlProductDescription <br />
+                            @dlProduct.DlProductAvailableQUantity <br />
+                            <AuthorizeView Roles="Customer">
+                                <button data-toggle="tooltip" title="Order" class="btn btn-outline-dark btn-sm"
+                                        @onclick="(() => OrderProduct(dlProduct))">
+                                    <span class="iconify" data-icon="emojione-v1:plus" data-inline="false"></span>
+                                    Order Product
+                                </button>
+                                </AuthorizeView>
+                        </td>
+
+
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <AuthorizeView Roles="AdminO">
+            <p style="background-color:whitesmoke">
+                <!-- Add a new statement type -->
+                <button data-toggle="tooltip" title="Add New Product" class="btn btn-outline-dark btn-lg btn-block"
+                        @onclick="AddNewProduct">
+                    <span class="iconify" data-icon="emojione-v1:plus" data-inline="false"></span>
+                </button>
+            </p>
+        </AuthorizeView>
+
+        @if (ShowPopup == 1)
+        {
+            <!-- This is the popup to create or edit a statement type -->
+            <div class="modal" tabindex="-1" style="display:block" role="dialog">
+                <div class="modal-dialog modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title">@modalHeader</h3>
+                            <!-- Button to close the popup -->
+                            <button type="button" class="close"
+                                    @onclick="ClosePopup">
+                                <span aria-hidden="true">X</span>
+                            </button>
+                        </div>
+                        <!-- Edit form for the current statement -->
+                        <div class="modal-body">
+                            <EditForm Model="@dlNewProduct" OnValidSubmit="SaveNewProduct">
+                                <DataAnnotationsValidator />
+                                <ValidationSummary />
+                                <p>
+                                    <label>
+                                        Product Category
+
+                                        <InputSelect @bind-Value="dlNewProduct.DlProductOwnership">
+                                            <option value="">Select Category ...</option>
+                                            @foreach (var selectOption in dlProductCategories)
+                                                    {
+                                                <option value=@selectOption.DlProductCategoryId>@selectOption.DlProductCategoryName</option>
+                                                    }
+                                            /**/
+                                            /**/
+                                            /**/
+                                            /**/
+                                            /**/
+                                            /**/
+                                            /**/
+                                            /**/
+
+
+
+
+                                        </InputSelect>
+                                    </label>
+                                </p>
+
+                                <p>
+                                    <label>
+                                        Product Name
+                                        <InputText @bind-Value="dlNewProduct.DlProductName" />
+                                    </label>
+                                </p>
+                                <p>
+                                    <label>
+                                        Description
+                                        <InputTextArea @bind-Value="dlNewProduct.DlProductDescription" />
+                                    </label>
+                                </p>
+                                <p>
+                                    <label>
+                                        Available Quantities
+                                        <InputSelect @bind-Value="dlNewProduct.DlProductAvailableQUantity">
+                                            <option value="">Select Quantity ...</option>
+                                            @foreach (var selectOption in availableQuantities)
+                                                    {
+                                                <option value=@selectOption>@selectOption</option>
+                                                    }
+                                            /**/
+                                            /**/
+                                            /**/
+                                            /**/
+                                            /**/
+                                            /**/
+                                            /**/
+                                            /**/
+                                            /**/
+
+                                        </InputSelect>
+                                    </label>
+                                </p>
+                                <label>Upload from File</label>
+                                <input type="file"   accept=".xls,.xlsx, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"   />
+
+                                <button type="submit">Submit</button>
+
+
+
+                            </EditForm>
+
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        }
+
+        @if (ShowPopup == 2)
+        {
+            <!-- This is the popup to create or edit a statement type -->
+            <div class="modal" tabindex="-1" style="display:block" role="dialog">
+                <div class="modal-dialog modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title">@modalHeader</h3>
+                            <!-- Button to close the popup -->
+                            <button type="button" class="close"
+                                    @onclick="ClosePopup">
+                                <span aria-hidden="true">X</span>
+                            </button>
+                        </div>
+                        <!-- Edit form for the current statement -->
+                        <div class="modal-body">
+                       
+
+                            <p>
+                                @orderProduct.DlProductName <br />
+                                @orderProduct.DlProductDescription <br />
+                                @orderProduct.DlProductAvailableQUantity <br />
+                            </p>
+
+
+                            <EditForm Model="@newOrder" OnValidSubmit="(() => SaveOrder(orderProduct))">
+                                <DataAnnotationsValidator />
+                                <ValidationSummary />
+
+                                <p>
+                                    <label>
+                                        Quantity Required
+                                        <InputText @bind-Value="newOrder.DlOrderQuantity" />
+                                    </label>
+                                </p>
+
+
+                                <button type="submit">
+                                    Add to Order
+                                    <span class="iconify" data-icon="emojione-v1:plus" data-inline="false"></span>
+                                </button>
+
+                            </EditForm>
+
+
+
+
+
+
+
+
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        }
+        @if (ShowPopup == 3)
+        {
+            <!-- This is the popup to create or edit a statement type -->
+            <div class="modal" tabindex="-1" style="display:block" role="dialog">
+                <div class="modal-dialog modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title">@modalHeader</h3>
+                            <!-- Button to close the popup -->
+                            <button type="button" class="close"
+                                    @onclick="ClosePopup">
+                                <span aria-hidden="true">X</span>
+                            </button>
+                        </div>
+                        <!-- Edit form for the current statement -->
+                        <div class="modal-body">
+
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <td>Product</td>
+                                        <td>Pack Quantity</td>
+                                        <td>Order Quantity</td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var currentOrder in currentOrderForDisplay)
+                                    {
+                                        <tr>
+
+                                            <td>@currentOrder.DlOrderCurrentProduct</td>
+
+                                            <td>@currentOrder.DlOrderCurrentProductQuantity</td>
+
+                                            <td>@currentOrder.DlOrderCurrentQuantity</td>
+
+                                            <td>
+                                            </td>
+
+                                        </tr>
+                                    }
+
+
+                                </tbody>
+
+                            </table>
+                            <button data-toggle="tooltip" title="Order" class="btn btn-outline-dark"
+                                    @onclick="(() => SubmitFullOrder())">
+                                <span class="iconify" data-icon="emojione-v1:plus" data-inline="false"></span>
+                                Submit Order
+                            </button>
+
+
+
+
+
+
+
+
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        }
+
+    }
+
+
+    @code {
+
+        [CascadingParameter]
+        private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+
+        List<DrinkLinkProducts> dlProducts = new List<DrinkLinkProducts>();
+
+        List<DrinkLinkProductCategory> dlProductCategories = new List<DrinkLinkProductCategory>();
+
+        List<DrinkLinkOrder> customerCurrentOrder = new List<DrinkLinkOrder>();
+
+        List<DrinkLinkOrderCurrent> currentOrderForDisplay = new List<DrinkLinkOrderCurrent>();
+
+        DrinkLinkProducts orderProduct = new DrinkLinkProducts();
+        DrinkLinkProducts dlNewProduct = new DrinkLinkProducts();
+        DrinkLinkOrder newOrder;
+        DrinkLinkOrderCurrent currentOrder;
+        string newOrderParentId;
+
+        List<string> availableQuantities = Constants.DropDownOptions.AvailableQuantities;
+        string modalHeader = "";
+        int ShowPopup = 0;
+
+        protected override async Task OnInitializedAsync()
+        {
+            dlProducts = await @Service.GetDlProductData();
+            dlProductCategories = await @Service.GetDlProductCategoryData();
+            newOrderParentId = Guid.NewGuid().ToString();
+        }
+
+        void AddNewProduct()
+        {
+
+
+
+            dlNewProduct.DlProductId = "123456";
+
+            modalHeader = Constants.ModalContent.modalHeaderAdd;
+
+            ShowPopup = 1;
+        }
+        void ClosePopup()
+        {
+            // Close the Popup
+
+            ShowPopup = 0;
+
+        }
+        async Task SaveNewProduct()
+        {
+            // Close the Popup
+            ClosePopup();
+            // Get the current user
+            var user = (await authenticationStateTask).User;
+            if(user.IsInRole("AdminO"))
+            {
+
+            }
+
+            // A new statement will have the Id set to 0
+            if (dlNewProduct.DlProductId == "123456")
+            {
+                dlNewProduct.DlProductId = Guid.NewGuid().ToString();
+                var result =
+                @Service.CreateNewDlProductinDB(dlNewProduct);
+
+                //Next Run Stored Procedure to Update Default Values
+                if (result)
+                {
+
+
+
+
+                    NavigationManager.NavigateTo("/fetchaddproducts", true);
+
+                }
+            }
+        }
+        void OrderProduct(DrinkLinkProducts dlProduct)
+        {
+
+
+
+            orderProduct = dlProduct;
+            newOrder = new DrinkLinkOrder();
+            newOrder.DlOrderParentOrderId = newOrderParentId;
+            currentOrder = new DrinkLinkOrderCurrent();
+            modalHeader = Constants.ModalContent.modalHeaderOrder;
+
+            ShowPopup = 2;
+        }
+        async Task SaveOrder(DrinkLinkProducts orderProduct)
+        {
+            // Close the Popup
+            ClosePopup();
+            // Get the current user
+            var user = (await authenticationStateTask).User;
+            // A new statement will have the Id set to 0
+
+
+            newOrder.DlOrderId = Guid.NewGuid().ToString();
+            newOrder.DlOrderProductId = orderProduct.DlProductId;
+            newOrder.DlOrderDate = DateTime.Now;
+            newOrder.DlOrderCustomerId = user.Identity.Name;
+
+            currentOrder.DlOrderCurrentProduct = orderProduct.DlProductName;
+            currentOrder.DlOrderCurrentProductQuantity = orderProduct.DlProductAvailableQUantity;
+            currentOrder.DlOrderCurrentQuantity = newOrder.DlOrderQuantity;
+
+            currentOrderForDisplay.Add(currentOrder);
+
+            customerCurrentOrder.Add(newOrder);
+
+            //var result =
+            //@Service.SubmitNewOrder(newOrder);
+
+            //Next Run Stored Procedure to Update Default Values
+            //if (result)
+            //{
+
+
+
+
+            //    NavigationManager.NavigateTo("/fetchaddproducts", true);
+
+            //}
+
+        }
+
+        void ViewFullOrder()
+        {
+
+
+
+
+
+            modalHeader = Constants.ModalContent.modalHeaderOrder;
+
+            ShowPopup = 3;
+        }
+
+        void SubmitFullOrder()
+        {
+
+            //var result =
+            //@Service.SubmitNewOrder(newOrder);
+
+            //Next Run Stored Procedure to Update Default Values
+            //if (result)
+            //{
+
+            int orderCount = customerCurrentOrder.Count();
+            foreach (var currentOrder in customerCurrentOrder)
+            {
+
+                var result =
+                @Service.SubmitNewOrder(currentOrder);
+                if (result)
+                {
+                    orderCount = orderCount - 1;
+
+                }
+            }
+
+            if (orderCount == 0)
+            {
+
+                NavigationManager.NavigateTo("/fetchaddproducts");
+                customerCurrentOrder.Clear();
+                currentOrderForDisplay.Clear();
+                ClosePopup();
+            }
+
+            //}
+
+
+        }
+
+    }
+

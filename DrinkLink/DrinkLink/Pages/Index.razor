@@ -1,0 +1,15 @@
+﻿@page "/"
+
+<h1>DrinkLink</h1>
+<AuthorizeView>
+    
+    <NotAuthorized>
+        <h2> Welcome to DrinkLink </h2>
+        <p>Please Login or Register above</p>
+    </NotAuthorized>
+    <Authorized>
+        <h2> Welcome back to DrinkLink </h2>
+        <p>Please select an option from the menu on the left.(Please note if you have recently registered no options will be avaibale until you recieve a confirmation mail</p> 
+    </Authorized>
+
+</AuthorizeView>
